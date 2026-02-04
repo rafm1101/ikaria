@@ -1,5 +1,5 @@
 [project]
-name = "explore-milet-template-notebook"
+name = "explore-ikaria-template-notebook"
 version = "0.1.0"
 description = ""
 authors = [{ name = "MR", email = "<raffmatth@gmail.com>" }]
@@ -17,6 +17,15 @@ pyarrow = "^21.0"
 pre-commit = "^3.7.1"
 types-pyyaml = "^6.0.12.11"
 
+[[tool.poetry.source]]
+name = "nemea-index"
+url = "http://localhost:8080/simple/"
+priority = "primary"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "supplemental"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
@@ -24,7 +33,3 @@ build-backend = "poetry.core.masonry.api"
 [tool.setuptools.packages.find]
 where = ["src"]
 namespaces = false
-
-[[tool.poetry.source]]
-name = "PyPI"
-priority = "supplemental"
