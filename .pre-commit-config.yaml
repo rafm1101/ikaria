@@ -1,0 +1,94 @@
+default_language_version:
+  python: python3.13
+
+repos:
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    # Mypy treats package as single module. 
+    # This won't work here as each working directory should be treated as individual module.
+    # We loop over every working directory (which .py files) and execute mypy in parallel -P ?? cores
+    hooks:
+      - id: mypy
+        entry: >
+          bash -c 
+          '
+          rm .mypy.pre-commit.logs ; 
+          rm .mypy.pre-commit-passed.logs ; 
+          rm .mypy.pre-commit-report.logs ; 
+          rm .mypy.pre-commit.path.logs ; 
+          echo $(date +"%T.%N"): START >> .mypy.pre-commit.logs;
+          echo $@ > .mypy.pre-commit-passed.logs ;
+          if [ -z "$(cat .mypy.pre-commit-passed.logs)" ]; then git diff --name-only --cached '*.py' > .mypy.pre-commit-passed.logs; fi;
+          included_paths=$(tr " " "\n" < .mypy.pre-commit-passed.logs | grep -oP "^(.+?\/){0,2}" | uniq);
+          echo $(date +"%T.%N"): included_paths $included_paths >> .mypy.pre-commit.logs;
+          echo $included_paths > .mypy.pre-commit-passed.logs;
+          regex_paths=$(tr " " "\|" < .mypy.pre-commit-passed.logs);
+          n_paths=$(wc -l <<< $(cat .mypy.pre-commit-passed.logs | tr " " "\n"));
+          echo $(date +"%T.%N"): n_paths $n_paths >> .mypy.pre-commit.logs;
+          echo "$(date +"%T.%N"): regex_paths ${regex_paths}" >> .mypy.pre-commit.logs;
+          paths_to_mypy=$(find . -type f -name pyproject.toml | \
+            grep -v "\./pyproject.toml\|cachedir\|.venv" | \
+            grep -P $regex_paths | \
+            xargs -I {} dirname {} | \
+            while read f; do if [ "$(find $f -type d \( -name cachedir -o -name .venv \) -prune -o -name '*.py' -print)" ]; \
+            then echo $f && echo $(date +"%T.%N"): $f >> .mypy.pre-commit.logs ; fi; \
+            done | \
+            grep -Pv "^[\s]+$" | \
+            sort);
+          echo $paths_to_mypy >> .mypy.pre-commit.path.logs ;
+          n_paths_to_mypy=$(wc -l <<< $(echo $paths_to_mypy | tr " " "\n"));
+          echo $(date +"%T.%N"): n_paths_to_mypy $n_paths_to_mypy >> .mypy.pre-commit.logs;
+          if [ "$n_paths_to_mypy" -lt 16 ]; then n_processes=$n_paths_to_mypy; else n_processes=16; fi;
+          echo $(date +"%T.%N"): n_processes $n_processes >> .mypy.pre-commit.logs;
+          printf "%s\0" $(cat .mypy.pre-commit.path.logs) | xargs -0 -I @ -P $n_processes mypy --config-file pyproject.toml @ >> .mypy.pre-commit-report.logs; 
+          echo $(date +"%T.%N"): Done >> .mypy.pre-commit.logs;
+          if grep -q error .mypy.pre-commit-report.logs; 
+          then cat .mypy.pre-commit-report.logs && exit 42;
+          fi'
+        args: []
+        pass_filenames: true
+        require_serial: true
+        additional_dependencies: [pandas-stubs, types-tensorflow, types-PyYAML, types-requests, pytest-stub]
+
+  - repo: https://github.com/ambv/black
+    rev: "25.1.0"
+    hooks:
+      - id: black
+        files: .
+        args: ["--config", "pyproject.toml"]
+
+  - repo: https://github.com/pycqa/isort
+    rev: 6.0.0
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/ambv/black
+    rev: "25.1.0"
+    hooks:
+      - id: black-jupyter
+        args: ["--config", "pyproject.toml"]
+
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: ["--maxkb=775"]
+
+  - repo: https://github.com/jendrikseipp/vulture
+    rev: 'v2.14'
+    hooks:
+      - id: vulture
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.1
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - Flake8-pyproject
+
