@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def get_layer_outputs(model: tf.keras.Model, layer_names: list[str]) -> list:
+def get_layer_outputs(model: tf.keras.Model, layer_names: list[str]) -> list[tf.keras.Layer]:
     """Retrieve a list of layer outputs.
 
     Parameters

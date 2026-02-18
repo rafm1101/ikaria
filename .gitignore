@@ -1,9 +1,13 @@
 # logging
 *.log
+*.logs
 *.txt
 
 # output artifacts
 *.pdf
+
+# directories
+__pycache__
 
 # latex artifacts
 ls-R

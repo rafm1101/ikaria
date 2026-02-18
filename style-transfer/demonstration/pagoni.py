@@ -4,7 +4,7 @@ import tensorflow as tf
 from numpy.typing import NDArray
 
 
-def plot_row(images, titles, n_images=3, n=3, J=np.zeros((1, 0))):
+def plot_row(images, titles, n_images=3, row_max=3, J=np.zeros((1, 0))):
     """
     plot images next to each other with titles
 
@@ -17,14 +17,14 @@ def plot_row(images, titles, n_images=3, n=3, J=np.zeros((1, 0))):
     n_images
         Number of images to display.
     row_max
-        Max number of images per row.
+        Max number of images per row (aka n).
       J - array of values of a function to display together with the images
           (typically the loss function at the end of the loops through the epochs)
     """
     fig = plt.figure(figsize=(16, 4))
 
     for i in range(np.minimum(n_images, images.shape[0])):
-        ax = fig.add_subplot(1, n, i + 1)
+        ax = fig.add_subplot(1, row_max, i + 1)
         if not tf.is_tensor(images):
             plt.imshow(images[i])
         else:
@@ -35,7 +35,7 @@ def plot_row(images, titles, n_images=3, n=3, J=np.zeros((1, 0))):
         if n_images == 3:
             plt.show()
             fig = plt.figure(figsize=(16, 4))
-        ax = fig.add_subplot(1, n, n_images % 3 + 1)
+        ax = fig.add_subplot(1, row_max, n_images % 3 + 1)
         plt.plot(J)
         ax.title.set_text("style loss")
 
